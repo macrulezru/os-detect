@@ -1,9 +1,17 @@
 {
   "name": "os-detect",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple OS and device type detection for browsers (no dependencies)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/macrulezru/os-detect.git"
+  },
+  "homepage": "https://macrulez.ru/#/en",
+  "bugs": {
+    "url": "https://github.com/macrulezru/os-detect/issues"
+  },
   "main": "index.js",
   "keywords": ["os", "detect", "browser", "platform", "device", "mobile", "desktop"],
-  "author": "",
+  "author": "macrulez",
   "license": "MIT"
 }
