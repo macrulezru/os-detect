@@ -1,17 +1,93 @@
 {
   "name": "os-detect",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Simple OS and device type detection for browsers (no dependencies)",
+  "author": "macrulez",
+  "license": "MIT",
+  "packageManager": "npm@10.9.2",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "browser": "./dist/index.umd.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "dist/index.umd.js",
+  "jsdelivr": "dist/index.umd.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.mjs",
+      "require": "./dist/react.js"
+    },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "import": "./dist/vue.mjs",
+      "require": "./dist/vue.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src",
+    "format": "prettier --write src",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0",
+    "vue": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "eslint": "^10.1.0",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "prettier": "^3.8.1",
+    "react": "^19.2.4",
+    "ts-jest": "^29.4.6",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.57.2",
+    "vue": "^3.5.31"
+  },
+  "keywords": [
+    "os",
+    "detect",
+    "browser",
+    "platform",
+    "device",
+    "mobile",
+    "desktop",
+    "ios",
+    "android",
+    "typescript",
+    "react",
+    "vue"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/macrulezru/os-detect.git"
   },
-  "homepage": "https://macrulez.ru/#/en",
+  "homepage": "https://github.com/macrulezru/os-detect#readme",
   "bugs": {
     "url": "https://github.com/macrulezru/os-detect/issues"
-  },
-  "main": "index.js",
-  "keywords": ["os", "detect", "browser", "platform", "device", "mobile", "desktop"],
-  "author": "macrulez",
-  "license": "MIT"
+  }
 }
