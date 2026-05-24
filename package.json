@@ -1,6 +1,6 @@
 {
   "name": "os-detect",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Simple OS and device type detection for browsers (no dependencies)",
   "author": "macrulez",
   "license": "MIT",
@@ -62,10 +62,10 @@
     "jest-environment-jsdom": "^30.3.0",
     "prettier": "^3.8.1",
     "react": "^19.2.4",
-    "ts-jest": "^29.4.6",
+    "ts-jest": "^29.4.11",
     "tsup": "^8.5.1",
     "typescript": "^6.0.2",
-    "typescript-eslint": "^8.57.2",
+    "typescript-eslint": "^8.59.4",
     "vue": "^3.5.31"
   },
   "keywords": [
