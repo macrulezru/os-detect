@@ -1,6 +1,6 @@
 {
   "name": "os-detect",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Simple OS and device type detection for browsers (no dependencies)",
   "author": "macrulez",
   "license": "MIT",
