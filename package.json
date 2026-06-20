@@ -1,13 +1,18 @@
 {
   "name": "os-detect",
-  "version": "2.0.3",
-  "description": "Simple OS and device type detection for browsers (no dependencies)",
-  "author": "macrulez",
+  "version": "2.0.4",
+  "description": "OS, browser and device-type detection from the user agent — SSR-safe and zero-dependency. Vanilla JS / Vue 3 / React.",
+  "author": "macrulez <macrulezru@gmail.com> (https://macrulez.ru/en)",
   "license": "MIT",
   "packageManager": "npm@10.9.2",
   "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -75,12 +80,11 @@
     "platform",
     "device",
     "mobile",
-    "desktop",
-    "ios",
-    "android",
-    "typescript",
+    "user-agent",
+    "ssr",
     "react",
-    "vue"
+    "vue",
+    "typescript"
   ],
   "repository": {
     "type": "git",
