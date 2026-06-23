@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Fixed
+- **Bug**: `dist/vue.umd.js` shipped at ~2.2 MB because the UMD/IIFE build inlined the entire Vue runtime instead of treating `vue` as external (esbuild can't leave an external unresolved in `iife` format without a global mapping). UMD/IIFE is now only built for the core `index.ts` entry point; published package size dropped from ~441 KB / 2.3 MB unpacked to ~13 KB / 72 KB unpacked.
+
+### Added
+- `resetDetectionCache()` — clears every cached detection result. Documented advanced API for long-running Node.js processes or test suites; not needed in normal browser usage.
+- Playwright e2e suite (`e2e/`, `npm run test:e2e`) exercising the built UMD bundle against real Chromium, Firefox, and WebKit engines, in addition to the existing jsdom-based unit tests.
+
+### Changed
+- `src/index.ts` split into `src/utils/{platform,cache}.ts` and `src/detectors/{ios,macos,android,windows,linux,chromeos}.ts`. Public API is unchanged.
+- Windows 11 detection thresholds (build number 22000, platform-version major 13) are now named constants with sourced comments instead of inline magic numbers.
+- `coverage/` is no longer committed to git.
+
 ## [2.0.0] - 2026-03-29
 
 ### Breaking Changes

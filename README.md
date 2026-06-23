@@ -28,6 +28,7 @@ Lightweight OS and device-type detection for browsers, Node.js, and SSR — with
 - [UMD / CDN](#umd--cdn)
 - [TypeScript types](#typescript-types)
 - [Detection strategy](#detection-strategy)
+- [Caching & resetDetectionCache](#caching--resetdetectioncache)
 - [Architecture](#architecture)
 - [Bundle size & entry points](#bundle-size--entry-points)
 - [Migration from v1.x](#migration-from-v1x)
@@ -464,6 +465,30 @@ Reads `process.platform` when `navigator` is absent. No userAgent parsing is don
 
 Results are stored in module-level variables after the first call. Subsequent calls return the cached value directly with no DOM or process access. This makes repeated calls in reactive contexts (render functions, computed properties) effectively free.
 
+### Limitations
+
+Every detector ultimately relies on `navigator.userAgentData` or `navigator.userAgent` (or `process.platform` in Node.js). This has two structural consequences:
+
+- **User agent strings can be spoofed** by the browser, an extension, or devtools device emulation. There is no way to cryptographically verify the reported platform — treat results as a UX hint, not a security boundary.
+- **`navigator.userAgentData` is a moving target.** Chromium is progressively freezing/reducing the legacy `navigator.userAgent` string and gating more detail behind opt-in high-entropy values. Firefox and Safari don't implement `userAgentData` at all, so they always fall through to UA-string regexes. Future browser changes could require updated patterns — this is inherent to UA-based detection, not specific to this library.
+
+---
+
+## Caching & resetDetectionCache
+
+```ts
+import { resetDetectionCache } from 'os-detect'
+
+resetDetectionCache() // clears every cached detection result
+```
+
+All `detectIs*()` functions and `getOS()` cache their result after the first call (see [Caching](#caching) above). In a normal browser tab the OS never changes mid-session, so this is never needed. It exists for advanced cases:
+
+- A long-running Node.js process (e.g. an Electron main process) that needs to re-evaluate `process.platform` after switching contexts.
+- Test suites that mock `navigator`/`process.platform` per test without re-importing the module.
+
+`detectIsWindows11()` is not cached — it always re-runs its async check.
+
 ---
 
 ## Architecture
@@ -471,28 +496,31 @@ Results are stored in module-level variables after the first call. Subsequent ca
 ```
 os-detect
 │
-├── src/index.ts  (core entry point)
+├── src/utils/platform.ts
 │     getUADataPlatform()    → navigator.userAgentData.platform (Chrome/Edge)
 │     getNodePlatform()      → process.platform (Node.js only)
 │
-│     detectIsIOS()          → UA + maxTouchPoints (iPadOS 13+ aware)
-│     detectIsMacOS()        → UAData / UA / process.platform=darwin
-│     detectIsAndroid()      → UAData / UA / process.platform=android
-│     detectIsWindows()      → UAData / UA / process.platform=win32
-│     detectIsChromeOS()     → UAData / UA (browser only)
-│     detectIsLinux()        → UAData / UA / process.platform=linux
-│                               (excludes Android and ChromeOS)
+├── src/utils/cache.ts
+│     memoizeBoolean()       → wraps a detector with a one-time cache
+│     resetDetectionCache()  → clears every cache registered via memoizeBoolean()
 │
-│     detectIsWindows11()    → async
-│       browser: userAgentData.getHighEntropyValues(['platformVersion'])
-│                platformVersion >= 13.0.0 → Windows 11
-│       Node.js: import('os').release() build number >= 22000
+├── src/detectors/ios.ts        detectIsIOS()       → UA + maxTouchPoints (iPadOS 13+ aware)
+├── src/detectors/macos.ts      detectIsMacOS()      → UAData / UA / process.platform=darwin
+├── src/detectors/android.ts    detectIsAndroid()    → UAData / UA / process.platform=android
+├── src/detectors/chromeos.ts   detectIsChromeOS()   → UAData / UA (browser only)
+├── src/detectors/linux.ts      detectIsLinux()      → UAData / UA / process.platform=linux
+│                                                        (excludes Android and ChromeOS)
+├── src/detectors/windows.ts    detectIsWindows()    → UAData / UA / process.platform=win32
+│                                detectIsWindows11()  → async
+│                                  browser: userAgentData.getHighEntropyValues(['platformVersion'])
+│                                           platformVersion >= 13.0.0 → Windows 11
+│                                  Node.js: import('os').release() build number >= 22000
 │
+├── src/index.ts  (core entry point — re-exports the detectors above, plus:)
 │     getOS()               → calls detectors in priority order
 │     isMobileDevice()      → detectIsIOS() || detectIsAndroid()
 │     isDesktopDevice()     → detectIsMacOS() || detectIsWindows()
 │                               || detectIsLinux() || detectIsChromeOS()
-│
 │     detectIsiOS()         → deprecated alias for detectIsIOS()
 │
 ├── src/react.ts  (os-detect/react)

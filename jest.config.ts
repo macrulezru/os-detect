@@ -9,7 +9,7 @@ const config: Config = {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
   collectCoverage: true,
-  collectCoverageFrom: ['src/index.ts'],
+  collectCoverageFrom: ['src/index.ts', 'src/detectors/**/*.ts', 'src/utils/**/*.ts'],
   coverageThreshold: {
     global: {
       lines: 90,
