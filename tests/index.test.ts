@@ -404,6 +404,27 @@ describe('getOS', () => {
   });
 });
 
+// ---- resetDetectionCache ----
+
+describe('resetDetectionCache', () => {
+  it('forces re-detection after the navigator changes', async () => {
+    mockNavigator({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' });
+    const { detectIsWindows, detectIsMacOS, resetDetectionCache } = await load();
+    expect(detectIsWindows()).toBe(true);
+    expect(detectIsMacOS()).toBe(false);
+
+    mockNavigator({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)', maxTouchPoints: 0 });
+
+    // Stale cache: still reports the old result.
+    expect(detectIsWindows()).toBe(true);
+
+    resetDetectionCache();
+
+    expect(detectIsWindows()).toBe(false);
+    expect(detectIsMacOS()).toBe(true);
+  });
+});
+
 // ---- detectIsWindows11 ----
 
 describe('detectIsWindows11', () => {
