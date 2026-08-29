@@ -1,9 +1,10 @@
 {
   "name": "os-detect",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "OS, browser and device-type detection from the user agent — SSR-safe and zero-dependency. Vanilla JS / Vue 3 / React.",
   "author": "macrulez <macrulezru@gmail.com> (https://macrulez.ru/en)",
   "license": "MIT",
+  "homepage": "https://npm.vuecraft.ru/en/packages/os-detect/",
   "packageManager": "npm@10.9.2",
   "sideEffects": false,
   "engines": {
@@ -93,7 +94,6 @@
     "type": "git",
     "url": "git+https://github.com/macrulezru/os-detect.git"
   },
-  "homepage": "https://github.com/macrulezru/os-detect#readme",
   "bugs": {
     "url": "https://github.com/macrulezru/os-detect/issues"
   }
