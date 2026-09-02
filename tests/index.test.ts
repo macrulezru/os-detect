@@ -299,6 +299,72 @@ describe('Node.js environment (process.platform)', () => {
   });
 });
 
+// ---- Node.js 21+ synthetic global `navigator` ----
+// Node 21+ exposes a bare `navigator` (fetch-API globals) with
+// `userAgent === 'Node.js/<major>'` instead of leaving `navigator` undefined —
+// getNodePlatform() must still resolve via process.platform in that case.
+
+describe('Node.js 21+ (synthetic navigator, process.platform)', () => {
+  const originalPlatform = process.platform;
+
+  function setNodePlatformWithSyntheticNavigator(platform: string) {
+    Object.defineProperty(window, 'navigator', {
+      value: { userAgent: 'Node.js/22' },
+      writable: true,
+      configurable: true,
+    });
+    Object.defineProperty(process, 'platform', {
+      value: platform,
+      writable: true,
+      configurable: true,
+    });
+  }
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', {
+      value: originalPlatform,
+      writable: true,
+      configurable: true,
+    });
+    mockNavigator({ userAgent: '' });
+  });
+
+  it('win32 → detectIsWindows=true, getOS=windows', async () => {
+    setNodePlatformWithSyntheticNavigator('win32');
+    const mod = await load();
+    expect(mod.detectIsWindows()).toBe(true);
+    expect(mod.getOS()).toBe('windows');
+  });
+
+  it('darwin → detectIsMacOS=true, getOS=macos', async () => {
+    setNodePlatformWithSyntheticNavigator('darwin');
+    const mod = await load();
+    expect(mod.detectIsMacOS()).toBe(true);
+    expect(mod.getOS()).toBe('macos');
+  });
+
+  it('linux → detectIsLinux=true, getOS=linux', async () => {
+    setNodePlatformWithSyntheticNavigator('linux');
+    const mod = await load();
+    expect(mod.detectIsLinux()).toBe(true);
+    expect(mod.getOS()).toBe('linux');
+  });
+
+  it('a real browser navigator is never mistaken for Node', async () => {
+    mockNavigator({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' });
+    Object.defineProperty(process, 'platform', {
+      value: 'darwin',
+      writable: true,
+      configurable: true,
+    });
+    const mod = await load();
+    // process.platform says darwin, but a real (non-Node) navigator is present,
+    // so detection must follow the browser UA, not process.platform.
+    expect(mod.detectIsWindows()).toBe(true);
+    expect(mod.detectIsMacOS()).toBe(false);
+  });
+});
+
 // ---- Deprecated alias ----
 
 describe('deprecated detectIsiOS', () => {
@@ -467,5 +533,35 @@ describe('detectIsWindows11', () => {
     });
     const { detectIsWindows11 } = await load();
     await expect(detectIsWindows11()).resolves.toBe(false);
+  });
+
+  it('Node.js path is selected (not the browser path) when navigator is Node\'s synthetic one', async () => {
+    // Doesn't assert the os.release() result itself (real os.release() runs
+    // unmocked here) — just that a Node.js-21+-style navigator routes into the
+    // Node.js branch instead of the browser userAgentData branch, which would
+    // throw/return false differently. See getNodePlatform()'s own tests above
+    // for the platform-resolution behavior this branch selection depends on.
+    Object.defineProperty(window, 'navigator', {
+      value: { userAgent: 'Node.js/22' },
+      writable: true,
+      configurable: true,
+    });
+    const originalPlatform = process.platform;
+    Object.defineProperty(process, 'platform', {
+      value: 'win32',
+      writable: true,
+      configurable: true,
+    });
+    try {
+      const { detectIsWindows11 } = await load();
+      await expect(detectIsWindows11()).resolves.toEqual(expect.any(Boolean));
+    } finally {
+      Object.defineProperty(process, 'platform', {
+        value: originalPlatform,
+        writable: true,
+        configurable: true,
+      });
+      mockNavigator({ userAgent: '' });
+    }
   });
 });

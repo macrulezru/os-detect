@@ -1,4 +1,9 @@
-import { getUADataPlatform, getNodePlatform, type NavigatorUAData } from '../utils/platform';
+import {
+  getUADataPlatform,
+  getNodePlatform,
+  isNodeNavigator,
+  type NavigatorUAData,
+} from '../utils/platform';
 import { memoizeBoolean } from '../utils/cache';
 
 export const detectIsWindows = memoizeBoolean((): boolean => {
@@ -34,7 +39,8 @@ export async function detectIsWindows11(): Promise<boolean> {
   if (!detectIsWindows()) return false;
 
   // Node.js path
-  if (typeof navigator === 'undefined' && typeof process !== 'undefined') {
+  const inNode = typeof navigator === 'undefined' || isNodeNavigator(navigator);
+  if (inNode && typeof process !== 'undefined') {
     try {
       const { release } = await import('os');
       const buildNumber = parseInt(release().split('.')[2] ?? '0', 10);
