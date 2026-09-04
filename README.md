@@ -70,6 +70,89 @@ console.log(isMobileDevice()) // true on iOS or Android
 
 All functions are synchronous and cached — safe to call on every render or in any reactive context.
 
+### More examples
+
+#### Vanilla JS
+
+**Tells Windows 11 from Windows 10, not just "Windows"**
+
+Most OS detectors stop at the userAgent string — this one asks the browser's own Client Hints API (or `os.release()` in Node) to actually know.
+
+```ts
+import { detectIsWindows11 } from 'os-detect'
+
+const isWin11 = await detectIsWindows11() // true only on Windows 11
+```
+
+#### Vue
+
+**The same thing, as a reactive composable**
+
+`useOS()` from `os-detect/vue` returns a readonly `Ref` — detection is synchronous and cached, same as the base function.
+
+```vue
+<script setup lang="ts">
+import { useOS } from 'os-detect/vue'
+
+const os = useOS() // Readonly<Ref<OS>>
+</script>
+
+<template>
+  <p>Running on {{ os }}</p>
+</template>
+```
+
+**Windows 11 as a ready-made reactive Ref**
+
+`useIsWindows11()` starts as `null` and resolves itself to `true`/`false` once the async detection inside `onMounted` completes.
+
+```vue
+<script setup lang="ts">
+import { useOS, useIsWindows11 } from 'os-detect/vue'
+
+const os = useOS() // Readonly<Ref<OS>>
+const isWin11 = useIsWindows11() // Readonly<Ref<boolean | null>>
+</script>
+
+<template>
+  <p v-if="isWin11 === null">Detecting Windows version…</p>
+  <p v-else-if="isWin11">Windows 11</p>
+  <p v-else-if="os === 'windows'">Windows 10 or older</p>
+  <p v-else>OS: {{ os }}</p>
+</template>
+```
+
+#### React
+
+**The same hook, as React**
+
+`useOS()` from `os-detect/react` — the value is computed once and stable across re-renders.
+
+```tsx
+import { useOS } from 'os-detect/react'
+
+function Banner() {
+  const os = useOS() // 'windows' | 'macos' | 'ios' | ...
+
+  return <p>Running on {os}</p>
+}
+```
+
+**Windows 11 detection inside useEffect**
+
+`useIsWindows11()` starts the async detection inside `useEffect` and updates state once it resolves — `null` while the check is in progress.
+
+```tsx
+import { useIsWindows11 } from 'os-detect/react'
+
+function WindowsBadge() {
+  const isWin11 = useIsWindows11() // null → true | false
+
+  if (isWin11 === null) return <p>Detecting Windows version…</p>
+  return <p>{isWin11 ? 'Windows 11' : 'Windows 10 or older'}</p>
+}
+```
+
 ---
 
 ## Documentation & links
