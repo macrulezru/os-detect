@@ -24,6 +24,17 @@ Lightweight OS and device-type detection for browsers, Node.js, and SSR — with
 
 ---
 
+## When you'd reach for this
+
+navigator.userAgent lies more often than you'd think: iPadOS pretends to be a Mac, and naive parsing catches Windows 10 where it's actually Windows 11 — os-detect takes on these edge cases instead of a hand-rolled regexp.
+
+- **Keyboard shortcuts should say Cmd, not Ctrl** — A "Ctrl+K" hint looks out of place on a Mac, and "⌘K" looks wrong on Windows. The package figures out which operating system it's running on, without parsing the user agent string by hand.
+- **An iPad pretends to be a desktop Mac** — Since iPadOS 13, the browser reports itself as "Macintosh," and a naive check would mistake a tablet for a laptop. An extra check for touch support tells them apart correctly.
+- **A feature only exists on one version of an OS** — A new operating-system feature only works on Windows 11 — telling it apart from Windows 10 and older needs to work the same way in the browser and on the server.
+- **OS detection shouldn't break server rendering** — Code that directly reads browser globals on the server just crashes during server-side rendering — OS detection stays safe for that case and updates itself once the work moves to the browser.
+
+---
+
 ## Installation
 
 | Environment | Minimum version                                      |
