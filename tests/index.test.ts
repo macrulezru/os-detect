@@ -198,7 +198,10 @@ describe('isMobileDevice', () => {
 
 describe('isDesktopDevice', () => {
   it('macOS → true', async () => {
-    mockNavigator({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)', maxTouchPoints: 0 });
+    mockNavigator({
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)',
+      maxTouchPoints: 0,
+    });
     const { isDesktopDevice } = await load();
     expect(isDesktopDevice()).toBe(true);
   });
@@ -411,8 +414,7 @@ describe('detectIsChromeOS', () => {
 describe('detectIsLinux excludes ChromeOS', () => {
   it('ChromeOS UA → detectIsLinux=false', async () => {
     mockNavigator({
-      userAgent:
-        'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36',
+      userAgent: 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36',
     });
     const { detectIsLinux } = await load();
     expect(detectIsLinux()).toBe(false);
@@ -479,7 +481,10 @@ describe('resetDetectionCache', () => {
     expect(detectIsWindows()).toBe(true);
     expect(detectIsMacOS()).toBe(false);
 
-    mockNavigator({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)', maxTouchPoints: 0 });
+    mockNavigator({
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)',
+      maxTouchPoints: 0,
+    });
 
     // Stale cache: still reports the old result.
     expect(detectIsWindows()).toBe(true);
@@ -535,7 +540,7 @@ describe('detectIsWindows11', () => {
     await expect(detectIsWindows11()).resolves.toBe(false);
   });
 
-  it('Node.js path is selected (not the browser path) when navigator is Node\'s synthetic one', async () => {
+  it("Node.js path is selected (not the browser path) when navigator is Node's synthetic one", async () => {
     // Doesn't assert the os.release() result itself (real os.release() runs
     // unmocked here) — just that a Node.js-21+-style navigator routes into the
     // Node.js branch instead of the browser userAgentData branch, which would

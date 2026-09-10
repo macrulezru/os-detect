@@ -2,7 +2,7 @@
 
 ![OS Detect](https://github.com/macrulezru/assets/blob/master/packages-images/os-detect.png?raw=true)
 
-Lightweight OS and device-type detection for browsers, Node.js, and SSR — with React hooks and Vue composables. No dependencies.
+Lightweight OS, form-factor, and runtime detection for browsers, Node.js, and SSR — with React hooks and Vue composables. No dependencies.
 
 ---
 
@@ -12,11 +12,15 @@ Lightweight OS and device-type detection for browsers, Node.js, and SSR — with
 - **Boolean functions** — `detectIsIOS()`, `detectIsMacOS()`, `detectIsAndroid()`, `detectIsWindows()`, `detectIsLinux()`, `detectIsChromeOS()` — all synchronous and cached
 - **`detectIsWindows11()`** — async; uses `navigator.userAgentData.getHighEntropyValues()` in the browser and `os.release()` in Node.js
 - **Device category** — `isMobileDevice()` and `isDesktopDevice()` for quick coarse checks
-- **React hooks** — `useOS()` and `useIsWindows11()` from `os-detect/react`
-- **Vue composables** — `useOS()` and `useIsWindows11()` from `os-detect/vue` as readonly refs
+- **`getFormFactor()`** — `'phone' | 'tablet' | 'desktop' | 'tv'`, driven by OS and physical screen size (not touch capability — a touchscreen Windows laptop is still `'desktop'`)
+- **`detectHasTouch()`** and **`getPrimaryInput()`** — whether the device has a touchscreen at all, and which input type (`'mouse'` | `'touch'`) is actually primary right now; the latter updates live on hybrid devices when a keyboard/mouse is attached or detached
+- **`getPixelRatio()`** — physical-to-logical pixel ratio, read live
+- **`getRuntime()`** — `'node' | 'browser' | 'webworker'`, plus standalone `detectIsNode()`, `detectIsBrowser()`, `detectIsWebWorker()`, `detectIsElectron()`, and `detectIsPWA()` checks
+- **React hooks** — `useOS()`, `useIsWindows11()`, `useFormFactor()`, `useRuntime()`, and the live-updating `usePrimaryInput()` from `os-detect/react`
+- **Vue composables** — the same five, from `os-detect/vue`, as readonly refs
 - **Node.js support** — reads `process.platform` in Node.js (including Node 21+, where the runtime exposes its own synthetic `navigator` global); `detectIsWindows11()` uses `os.release()` build number
 - **iPadOS 13+ detection** — correctly identifies iPads that send `Macintosh` in their userAgent via `navigator.maxTouchPoints`
-- **Result cache** — every function caches its result after the first call; zero overhead on subsequent calls
+- **Result cache** — every function caches its result after the first call, except `getPrimaryInput()`/`getPixelRatio()` (deliberately live — see above)
 - **Zero runtime dependencies** — no external packages; React and Vue are optional peer deps
 - **Tree-shakeable ESM** — import only what you use; UMD and CJS bundles also included
 
@@ -32,16 +36,18 @@ navigator.userAgent lies more often than you'd think: iPadOS pretends to be a Ma
 - **An iPad pretends to be a desktop Mac** — Since iPadOS 13, the browser reports itself as "Macintosh," and a naive check would mistake a tablet for a laptop. An extra check for touch support tells them apart correctly.
 - **A feature only exists on one version of an OS** — A new operating-system feature only works on Windows 11 — telling it apart from Windows 10 and older needs to work the same way in the browser and on the server.
 - **OS detection shouldn't break server rendering** — Code that directly reads browser globals on the server just crashes during server-side rendering — OS detection stays safe for that case and updates itself once the work moves to the browser.
+- **Picking a design language for the platform, not just the OS** — Windows should feel like Fluent, Android like Material — but a phone and a desktop browser on the same OS still want different layouts. OS and form factor together answer both questions instead of guessing from screen width alone.
+- **A hybrid device's keyboard gets attached or detached mid-session** — A Surface Pro (or a foldable) can go from touch-only to mouse-primary without a reload. Checking `navigator.maxTouchPoints` once at load time misses that entirely — the primary-input check here updates live instead.
 
 ---
 
 ## Installation
 
 | Environment | Minimum version                                      |
-| ----------- | ------------------------------------------------------ |
-| Node.js     | `18+`                                                    |
-| React       | `17+` (optional — only needed for `os-detect/react`)     |
-| Vue         | `3+` (optional — only needed for `os-detect/vue`)        |
+| ----------- | ---------------------------------------------------- |
+| Node.js     | `18+`                                                |
+| React       | `17+` (optional — only needed for `os-detect/react`) |
+| Vue         | `3+` (optional — only needed for `os-detect/vue`)    |
 
 ```bash
 npm install os-detect
@@ -64,19 +70,28 @@ A prebuilt UMD bundle is also available via unpkg/jsDelivr — no build step req
 ```html
 <script src="https://unpkg.com/os-detect/dist/index.umd.js"></script>
 <script>
-  console.log(OsDetect.getOS())
+  console.log(OsDetect.getOS());
 </script>
 ```
 
 ### Quick start
 
 ```ts
-import { getOS, detectIsIOS, detectIsWindows, isMobileDevice } from 'os-detect'
+import {
+  getOS,
+  detectIsIOS,
+  detectIsWindows,
+  isMobileDevice,
+  getFormFactor,
+  getRuntime,
+} from 'os-detect';
 
-console.log(getOS()) // 'windows' | 'macos' | 'ios' | 'android' | 'linux' | 'chromeos' | 'unknown'
-console.log(detectIsIOS()) // true on iPhone / iPad
-console.log(detectIsWindows()) // true on Windows desktop
-console.log(isMobileDevice()) // true on iOS or Android
+console.log(getOS()); // 'windows' | 'macos' | 'ios' | 'android' | 'linux' | 'chromeos' | 'unknown'
+console.log(detectIsIOS()); // true on iPhone / iPad
+console.log(detectIsWindows()); // true on Windows desktop
+console.log(isMobileDevice()); // true on iOS or Android
+console.log(getFormFactor()); // 'phone' | 'tablet' | 'desktop' | 'tv' | 'unknown'
+console.log(getRuntime()); // 'node' | 'browser' | 'webworker' | 'unknown'
 ```
 
 All functions are synchronous and cached — safe to call on every render or in any reactive context.
@@ -90,9 +105,35 @@ All functions are synchronous and cached — safe to call on every render or in 
 Most OS detectors stop at the userAgent string — this one asks the browser's own Client Hints API (or `os.release()` in Node) to actually know.
 
 ```ts
-import { detectIsWindows11 } from 'os-detect'
+import { detectIsWindows11 } from 'os-detect';
 
-const isWin11 = await detectIsWindows11() // true only on Windows 11
+const isWin11 = await detectIsWindows11(); // true only on Windows 11
+```
+
+**Choosing a design language from OS + form factor together**
+
+`getFormFactor()` looks at OS and physical screen size, not touch capability — a touchscreen Windows laptop still comes back `'desktop'`, not `'tablet'`.
+
+```ts
+import { getOS, getFormFactor } from 'os-detect';
+
+if (getOS() === 'windows' && getFormFactor() === 'desktop') {
+  loadFluentDesignSystem();
+} else if (getOS() === 'android') {
+  loadMaterialDesignSystem();
+}
+```
+
+**Telling a Node.js script apart from an Electron app**
+
+`getRuntime()` answers "am I in a browser, Node, or a Web Worker" — `detectIsElectron()` narrows a `'browser'` (or `'node'`, for Electron's main process) result further.
+
+```ts
+import { getRuntime, detectIsElectron } from 'os-detect';
+
+if (getRuntime() === 'browser' && detectIsElectron()) {
+  console.log('Running inside an Electron window');
+}
 ```
 
 #### Vue
@@ -103,9 +144,9 @@ const isWin11 = await detectIsWindows11() // true only on Windows 11
 
 ```vue
 <script setup lang="ts">
-import { useOS } from 'os-detect/vue'
+import { useOS } from 'os-detect/vue';
 
-const os = useOS() // Readonly<Ref<OS>>
+const os = useOS(); // Readonly<Ref<OS>>
 </script>
 
 <template>
@@ -119,10 +160,10 @@ const os = useOS() // Readonly<Ref<OS>>
 
 ```vue
 <script setup lang="ts">
-import { useOS, useIsWindows11 } from 'os-detect/vue'
+import { useOS, useIsWindows11 } from 'os-detect/vue';
 
-const os = useOS() // Readonly<Ref<OS>>
-const isWin11 = useIsWindows11() // Readonly<Ref<boolean | null>>
+const os = useOS(); // Readonly<Ref<OS>>
+const isWin11 = useIsWindows11(); // Readonly<Ref<boolean | null>>
 </script>
 
 <template>
@@ -133,6 +174,22 @@ const isWin11 = useIsWindows11() // Readonly<Ref<boolean | null>>
 </template>
 ```
 
+**A primary-input hint that updates itself live**
+
+`usePrimaryInput()` starts at `'unknown'`, resolves once mounted, and updates again on its own if a hybrid device's keyboard/mouse is attached or detached mid-session — no manual event listeners.
+
+```vue
+<script setup lang="ts">
+import { usePrimaryInput } from 'os-detect/vue';
+
+const input = usePrimaryInput(); // Readonly<Ref<'mouse' | 'touch' | 'unknown'>>
+</script>
+
+<template>
+  <p v-if="input === 'touch'">Showing larger tap targets</p>
+</template>
+```
+
 #### React
 
 **The same hook, as React**
@@ -140,12 +197,12 @@ const isWin11 = useIsWindows11() // Readonly<Ref<boolean | null>>
 `useOS()` from `os-detect/react` — the value is computed once and stable across re-renders.
 
 ```tsx
-import { useOS } from 'os-detect/react'
+import { useOS } from 'os-detect/react';
 
 function Banner() {
-  const os = useOS() // 'windows' | 'macos' | 'ios' | ...
+  const os = useOS(); // 'windows' | 'macos' | 'ios' | ...
 
-  return <p>Running on {os}</p>
+  return <p>Running on {os}</p>;
 }
 ```
 
@@ -154,13 +211,27 @@ function Banner() {
 `useIsWindows11()` starts the async detection inside `useEffect` and updates state once it resolves — `null` while the check is in progress.
 
 ```tsx
-import { useIsWindows11 } from 'os-detect/react'
+import { useIsWindows11 } from 'os-detect/react';
 
 function WindowsBadge() {
-  const isWin11 = useIsWindows11() // null → true | false
+  const isWin11 = useIsWindows11(); // null → true | false
 
-  if (isWin11 === null) return <p>Detecting Windows version…</p>
-  return <p>{isWin11 ? 'Windows 11' : 'Windows 10 or older'}</p>
+  if (isWin11 === null) return <p>Detecting Windows version…</p>;
+  return <p>{isWin11 ? 'Windows 11' : 'Windows 10 or older'}</p>;
+}
+```
+
+**A primary-input hint that updates itself live**
+
+`usePrimaryInput()` starts at `'unknown'`, resolves once mounted, and updates again on its own if a hybrid device's keyboard/mouse is attached or detached mid-session — no manual event listeners.
+
+```tsx
+import { usePrimaryInput } from 'os-detect/react';
+
+function TapTargets() {
+  const input = usePrimaryInput(); // 'mouse' | 'touch' | 'unknown'
+
+  return input === 'touch' ? <BigButtons /> : <CompactButtons />;
 }
 ```
 

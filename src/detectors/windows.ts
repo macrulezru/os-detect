@@ -55,9 +55,7 @@ export async function detectIsWindows11(): Promise<boolean> {
     const nav = navigator as Navigator & { userAgentData?: NavigatorUAData };
     if (!nav.userAgentData?.getHighEntropyValues) return false;
 
-    const { platformVersion } = await nav.userAgentData.getHighEntropyValues([
-      'platformVersion',
-    ]);
+    const { platformVersion } = await nav.userAgentData.getHighEntropyValues(['platformVersion']);
     if (!platformVersion) return false;
 
     const majorVersion = parseInt(platformVersion.split('.')[0], 10);
