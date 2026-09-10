@@ -10,6 +10,11 @@ declare global {
       detectIsLinux: () => boolean;
       isDesktopDevice: () => boolean;
       isMobileDevice: () => boolean;
+      getRuntime: () => string;
+      detectIsBrowser: () => boolean;
+      detectIsNode: () => boolean;
+      detectIsWebWorker: () => boolean;
+      getFormFactor: () => string;
     };
   }
 }
@@ -44,6 +49,30 @@ test.describe('real host (no spoofing)', () => {
       mobile: window.OsDetect.isMobileDevice(),
     }));
     expect(result).toEqual({ desktop: true, mobile: false });
+  });
+
+  test('getRuntime() is browser, detectIsBrowser() is true, detectIsNode()/detectIsWebWorker() are false', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const result = await page.evaluate(() => ({
+      runtime: window.OsDetect.getRuntime(),
+      isBrowser: window.OsDetect.detectIsBrowser(),
+      isNode: window.OsDetect.detectIsNode(),
+      isWebWorker: window.OsDetect.detectIsWebWorker(),
+    }));
+    expect(result).toEqual({
+      runtime: 'browser',
+      isBrowser: true,
+      isNode: false,
+      isWebWorker: false,
+    });
+  });
+
+  test('getFormFactor() is desktop on a real desktop browser window', async ({ page }) => {
+    await page.goto('/');
+    const formFactor = await page.evaluate(() => window.OsDetect.getFormFactor());
+    expect(formFactor).toBe('desktop');
   });
 });
 

@@ -1,7 +1,7 @@
 {
   "name": "os-detect",
-  "version": "2.1.5",
-  "description": "OS, browser and device-type detection from the user agent — SSR-safe and zero-dependency. Vanilla JS / Vue 3 / React.",
+  "version": "2.2.0",
+  "description": "OS, form-factor, and runtime detection from the user agent — SSR-safe and zero-dependency. Vanilla JS / Vue 3 / React.",
   "author": "macrulez <macrulezru@gmail.com> (https://macrulez.ru/en)",
   "license": "MIT",
   "homepage": "https://npm.vuecraft.ru/en/packages/os-detect/",
@@ -88,7 +88,13 @@
     "ssr",
     "react",
     "vue",
-    "typescript"
+    "typescript",
+    "formfactor",
+    "runtime",
+    "touch",
+    "electron",
+    "pwa",
+    "tv"
   ],
   "repository": {
     "type": "git",
