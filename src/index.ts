@@ -26,7 +26,7 @@ import { detectIsBrowser } from './detectors/browser';
 import { detectIsWebWorker } from './detectors/webworker';
 import { detectIsElectron } from './detectors/electron';
 import { detectIsPWA } from './detectors/pwa';
-import { resetDetectionCache } from './utils/cache';
+import { resetDetectionCache, registerResetter } from './utils/cache';
 
 // ---- OS string identifier ----
 export type OS = 'ios' | 'macos' | 'android' | 'windows' | 'linux' | 'chromeos' | 'unknown';
@@ -127,9 +127,18 @@ export function getPixelRatio(): number {
 }
 
 // ---- Deprecated alias for backwards compatibility ----
+// The underlying detection result is cached via detectIsIOS() itself, but the
+// deprecation warning isn't tied to that cache — without its own flag it would
+// fire on every single call, unlike every other console.warn in this package.
+let hasWarnedDeprecatedIsiOS = false;
+registerResetter(() => {
+  hasWarnedDeprecatedIsiOS = false;
+});
+
 /** @deprecated Use detectIsIOS() instead. Will be removed in v3.0. */
 export function detectIsiOS(): boolean {
-  if (typeof console !== 'undefined') {
+  if (!hasWarnedDeprecatedIsiOS && typeof console !== 'undefined') {
+    hasWarnedDeprecatedIsiOS = true;
     console.warn(
       '[os-detect] detectIsiOS() is deprecated. Use detectIsIOS() instead. Will be removed in v3.0.'
     );

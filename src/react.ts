@@ -20,7 +20,13 @@ export function useIsWindows11(): boolean | null {
   const [isWin11, setIsWin11] = useState<boolean | null>(null);
 
   useEffect(() => {
-    detectIsWindows11().then(setIsWin11);
+    let cancelled = false;
+    detectIsWindows11().then((value) => {
+      if (!cancelled) setIsWin11(value);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return isWin11;

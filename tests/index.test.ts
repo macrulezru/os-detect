@@ -379,6 +379,30 @@ describe('deprecated detectIsiOS', () => {
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('deprecated'));
     warnSpy.mockRestore();
   });
+
+  it('only logs the deprecation warning once across repeated calls', async () => {
+    // Regression: the cached detection result was deduped, but the warning
+    // itself fired on every single call regardless.
+    mockNavigator({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)' });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const { detectIsiOS } = await load();
+    detectIsiOS();
+    detectIsiOS();
+    detectIsiOS();
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    warnSpy.mockRestore();
+  });
+
+  it('warns again after resetDetectionCache()', async () => {
+    mockNavigator({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)' });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const { detectIsiOS, resetDetectionCache } = await load();
+    detectIsiOS();
+    resetDetectionCache();
+    detectIsiOS();
+    expect(warnSpy).toHaveBeenCalledTimes(2);
+    warnSpy.mockRestore();
+  });
 });
 
 // ---- ChromeOS ----
@@ -568,5 +592,68 @@ describe('detectIsWindows11', () => {
       });
       mockNavigator({ userAgent: '' });
     }
+  });
+
+  it('memoizes across repeated calls — the detector body only runs once', async () => {
+    // Regression: detectIsWindows11() used to re-run full detection (including
+    // the getHighEntropyValues() round-trip) on every call, unlike every other
+    // detector in this package (all wrapped in memoizeBoolean).
+    let calls = 0;
+    mockNavigator({
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      userAgentData: {
+        platform: 'Windows',
+        mobile: false,
+        getHighEntropyValues: async () => {
+          calls++;
+          return { platformVersion: '13.0.0' };
+        },
+      } as any,
+    });
+    const { detectIsWindows11 } = await load();
+    await detectIsWindows11();
+    await detectIsWindows11();
+    await detectIsWindows11();
+    expect(calls).toBe(1);
+  });
+
+  it('re-runs detection after resetDetectionCache()', async () => {
+    let calls = 0;
+    mockNavigator({
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      userAgentData: {
+        platform: 'Windows',
+        mobile: false,
+        getHighEntropyValues: async () => {
+          calls++;
+          return { platformVersion: '13.0.0' };
+        },
+      } as any,
+    });
+    const { detectIsWindows11, resetDetectionCache } = await load();
+    await detectIsWindows11();
+    resetDetectionCache();
+    await detectIsWindows11();
+    expect(calls).toBe(2);
+  });
+
+  it('concurrent calls before the first settles share the same in-flight detection', async () => {
+    let calls = 0;
+    mockNavigator({
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      userAgentData: {
+        platform: 'Windows',
+        mobile: false,
+        getHighEntropyValues: async () => {
+          calls++;
+          return { platformVersion: '13.0.0' };
+        },
+      } as any,
+    });
+    const { detectIsWindows11 } = await load();
+    const [a, b] = await Promise.all([detectIsWindows11(), detectIsWindows11()]);
+    expect(a).toBe(true);
+    expect(b).toBe(true);
+    expect(calls).toBe(1);
   });
 });

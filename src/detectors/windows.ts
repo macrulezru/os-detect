@@ -4,7 +4,7 @@ import {
   isNodeNavigator,
   type NavigatorUAData,
 } from '../utils/platform';
-import { memoizeBoolean } from '../utils/cache';
+import { memoizeBoolean, memoizeAsyncBoolean } from '../utils/cache';
 
 export const detectIsWindows = memoizeBoolean((): boolean => {
   // Node.js: process.platform === 'win32' (both 32-bit and 64-bit Windows)
@@ -35,7 +35,10 @@ const WINDOWS_11_MIN_PLATFORM_VERSION_MAJOR = 13;
 // Browser: uses userAgentData.getHighEntropyValues() (Chrome 90+ / Edge 90+).
 // Node.js: uses os.release() — Windows 11 reports build number >= 22000.
 // Returns false if not Windows, if the API is unavailable, or if detection fails.
-export async function detectIsWindows11(): Promise<boolean> {
+// Memoized like every other detector — this used to be the only one that
+// re-ran full detection (including a real Client Hints round-trip in the
+// browser) on every single call.
+export const detectIsWindows11 = memoizeAsyncBoolean(async (): Promise<boolean> => {
   if (!detectIsWindows()) return false;
 
   // Node.js path
@@ -63,4 +66,4 @@ export async function detectIsWindows11(): Promise<boolean> {
   } catch {
     return false;
   }
-}
+});
