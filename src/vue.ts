@@ -18,11 +18,16 @@ export function useOS() {
  */
 export function useIsWindows11() {
   const isWin11 = ref<boolean | null>(null);
+  let cancelled = false;
 
   onMounted(() => {
     detectIsWindows11().then((value) => {
-      isWin11.value = value;
+      if (!cancelled) isWin11.value = value;
     });
+  });
+
+  onUnmounted(() => {
+    cancelled = true;
   });
 
   return readonly(isWin11);
